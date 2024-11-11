@@ -1,0 +1,90 @@
+views:
+  - title: CX34 Operation
+    icon: mdi:heat-pump-outline
+    badges: []
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: entities
+            entities:
+              - entity: sensor.primary_load
+              - entity: sensor.compressor_power
+              - entity: sensor.cop
+              - entity: sensor.heat_pump_inlet_water_temperature
+                name: Inlet / return water temperature
+                secondary_info: none
+              - entity: sensor.heat_pump_outlet_water_temperature
+                name: Outlet / supply water temperature
+                secondary_info: none
+              - entity: sensor.nodered_c3c564d0fd9ec377
+              - entity: sensor.coil_temperature
+              - entity: sensor.exhaust_temperature
+              - entity: sensor.primary_flow
+              - entity: sensor.primary_pump_speed
+              - entity: sensor.compressor_speed
+              - entity: sensor.condenser_fan_speed
+              - entity: binary_sensor.cooling_mode
+              - entity: binary_sensor.heating_mode
+              - entity: binary_sensor.running_defrost
+              - entity: binary_sensor.primary_pump_run
+              - entity: binary_sensor.compressor_heater
+              - entity: binary_sensor.cooling_relay_din5
+                name: Switch DIN5 & DIN6
+            title: Current Values (15s)
+            state_color: true
+          - type: entities
+            entities:
+              - entity: sensor.cooling_return_water_temperature_setpoint
+              - entity: sensor.heating_return_water_temperature_setpoint
+              - entity: sensor.coil_temperature_to_activate_defrost
+            title: Configuration Feedback
+      - type: history-graph
+        entities:
+          - entity: sensor.nodered_c3c564d0fd9ec377
+          - entity: binary_sensor.cooling_mode
+          - entity: binary_sensor.heating_mode
+          - entity: binary_sensor.running_defrost
+          - entity: sensor.primary_flow
+          - entity: sensor.heat_pump_inlet_water_temperature
+          - entity: sensor.heat_pump_outlet_water_temperature
+          - entity: sensor.hhw_buffer_tank_temperature_top
+            name: Buffer tank temperature
+          - entity: binary_sensor.secondary_pump_floor_1_valve_relay
+            name: Floor 1
+          - entity: binary_sensor.secondary_pump_floor_2_valve_relay
+            name: Floor 2
+        hours_to_show: 2
+        title: Recent Operation
+      - type: vertical-stack
+        cards:
+          - type: gauge
+            severity:
+              green: 0
+              yellow: 300
+              red: 600
+            entity: sensor.caiso_emissions_rate
+            max: 800
+            min: 0
+            name: Current overall electricity emissions rate for CAISO
+      - type: history-graph
+        entities:
+          - entity: sensor.primary_load
+          - entity: sensor.compressor_power
+          - entity: sensor.cop
+          - entity: sensor.compressor_speed
+          - entity: sensor.condenser_fan_speed
+          - entity: sensor.primary_pump_speed
+        title: Recent Performance
+        hours_to_show: 2
+      - type: entities
+        entities:
+          - entity: sensor.cx34_energy_out
+            name: Useful Energy Out
+            secondary_info: none
+            icon: mdi:sun-snowflake-variant
+          - entity: sensor.cx34_energy_in
+            name: Energy In
+          - entity: sensor.overall_cop_today
+            name: Overall COP
+            secondary_info: none
+        title: Today
