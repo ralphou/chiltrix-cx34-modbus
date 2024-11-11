@@ -1,0 +1,4726 @@
+[
+    {
+        "id": "0a2673b12bac06f7",
+        "type": "tab",
+        "label": "Heat Pump CX34",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "a1d8f19e568264e2",
+        "type": "modbus-read",
+        "z": "0a2673b12bac06f7",
+        "name": "Read C 0 - 76",
+        "topic": "",
+        "showStatusActivities": true,
+        "logIOActivities": false,
+        "showErrors": true,
+        "showWarnings": true,
+        "unitid": "1",
+        "dataType": "HoldingRegister",
+        "adr": "200",
+        "quantity": "77",
+        "rate": "15",
+        "rateUnit": "s",
+        "delayOnStart": false,
+        "startDelayTime": "0",
+        "server": "efda4fa8d64a8ea0",
+        "useIOFile": false,
+        "ioFile": "",
+        "useIOForPayload": false,
+        "emptyMsgOnFail": false,
+        "x": 150,
+        "y": 80,
+        "wires": [
+            [
+                "72bfb8550d408104",
+                "d1ece748c9a983d5"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "72bfb8550d408104",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "CX-34 Read-Only C",
+        "func": "// Mapping of modbus registers, limited selection of C-Parameters (read only)\nvar cx34map = [\n  { index: 0, name: \"coilTemp\", measurement: \"temperature\" },\n  { index: 1, name: \"exhaustTemp\", measurement: \"temperature\" },\n  { index: 2, name: \"ambientTemp\", measurement: \"temperature\" },\n  { index: 3, name: \"outletWaterTemp\", measurement: \"temperature\" },\n  { index: 7, name: \"heatingSwitch\", measurement: \"switch\" },\n  { index: 8, name: \"coolingSwitch\", measurement: \"switch\" },\n  { index: 13, name: \"stopNoWaterFlow\", measurement: \"switch\" },\n  { index: 15, name: \"stopCompressorOvercurrent\", measurement: \"switch\" },\n  { index: 16, name: \"defrost\", measurement: \"switch\" },\n  { index: 17, name: \"antifreeze\", measurement: \"switch\" },\n  { index: 19, name: \"compressorSpeed\", measurement: \"speed\", maxSpeed:80 },\n  { index: 20, name: \"condenserFan\", measurement: \"switch\" },\n  { index: 21, name: \"compressorHeater\", measurement: \"switch\" },\n  { index: 29, name: \"primaryPump\", measurement: \"switch\" },\n  { index: 32, name: \"current\", measurement: \"current\" },\n  { index: 34, name: \"heatTargetTemp\", measurement: \"temperature\" },\n  { index: 40, name: \"expansionValveOpening\", measurement: \"angle\" },\n  { index: 44, name: \"lubricantStatus\", measurement: \"switch\" },\n  { index: 45, name: \"indoorTemp\", measurement: \"temperature\" },\n  { index: 46, name: \"acHeatTargetTemp\", measurement: \"temperature\" },\n  { index: 47, name: \"waterFlow\", measurement: \"flow\" },\n  { index: 47, name: \"waterFlowUnrounded\", measurement: \"flowUnrounded\" },\n  { index: 51, name: \"primaryPumpSpeed\", measurement: \"speed\", maxSpeed: 10 },\n  { index: 52, name: \"primaryPumpDuty\", measurement: \"duty\" },\n  { index: 53, name: \"condenserFan1Speed\", measurement: \"speed\", maxSpeed: 900 },\n  { index: 54, name: \"condenserFan2Speed\", measurement: \"speed\", maxSpeed: 900 },\n  { index: 55, name: \"mode\", measurement: \"mode\", modes:[\"off\",\"cool\",\"heat\",\"dhw\"] },\n  { index: 56, name: \"targetSpeed\", measurement: \"speed\", maxSpeed: 80 },\n  { index: 60, name: \"inletWaterTemp\", measurement: \"temperature\" },\n  { index: 73, name: \"acVoltage\", measurement: \"voltage\" },\n  { index: 76, name: \"busVoltage\", measurement: \"voltage\" },\n]\n\n// Initialize output message\nvar newMsg = {payload: msg.payload};\n\n// Store and translate modbus register values\nfor (const register of cx34map) {\n  var val = msg.payload[register.index];\n\n  // Temperatures are communicated in celsius with 1 decimal\n  if (register.measurement==\"temperature\")\n    val = val / 10 * 9 / 5 + 32;\n\n  if (register.measurement == \"switch\")\n    val = val > 0;\n\n  // Flows are communicated in L/min with 1 decimal\n  if (register.measurement == \"flow\")\n    val = Math.round(val * 0.26417) / 10;\n\n  if (register.measurement == \"flowUnrounded\")\n    val = val * 0.26417 / 10;\n\n  if (register.measurement == \"current\")\n    val = val / 10;\n\n  if (register.measurement == \"speed\" && \"maxSpeed\" in register)\n    val = Math.round(val / register.maxSpeed * 100);\n\n  if (register.measurement == \"mode\")\n    val = register.modes[val];\n\n  newMsg[register.name] = val;\n}\n\n// Update flow context object with some selected values\nlet cx34 = flow.get(\"cx34\");\ncx34.mode = newMsg.mode;\ncx34.compressorSpeed = newMsg.compressorSpeed;\ncx34.flowSI = msg.payload[47] / 10;\nflow.set(\"cx34\", cx34);\n\n// Return new message, which contains processed register values\nreturn newMsg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "// Code added here will be run once\n// whenever the node is started.\n\nif (flow.get(\"cx34\") === undefined) {\n    const cx34 = {};\n    flow.set(\"cx34\", cx34);\n}",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 40,
+        "wires": [
+            [
+                "3e8ab242ceea7ae8",
+                "ca6061a9eeeacb00",
+                "b9f7b0b16986e5a8",
+                "1ad33b4f6d6d3269",
+                "e074fc67dacf9aec",
+                "5344a9bc9337f7ea",
+                "2f932a4e79e6775d",
+                "3d50182ee44708e8",
+                "50601fe4d5208dbb",
+                "c4a75e27fc05bbfe",
+                "ec540322ee31b1e6",
+                "55872bc50750ca85",
+                "dc442e73aba5b1bf"
+            ]
+        ]
+    },
+    {
+        "id": "0cfbc6aab3a4b63d",
+        "type": "debug",
+        "z": "0a2673b12bac06f7",
+        "d": true,
+        "name": "C 0 - 76",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1540,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "3e8ab242ceea7ae8",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Ambient Air Temperature",
+        "entityConfig": "c3c564d0fd9ec377",
+        "version": 0,
+        "state": "ambientTemp",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 890,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ca6061a9eeeacb00",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Inlet Water Temperature",
+        "entityConfig": "7bd1d903d9412362",
+        "version": 0,
+        "state": "inletWaterTemp",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 890,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b9f7b0b16986e5a8",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Outlet Water Temperature",
+        "entityConfig": "cc868eae6469d395",
+        "version": 0,
+        "state": "outletWaterTemp",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 890,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1ad33b4f6d6d3269",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "AC Voltage",
+        "entityConfig": "6b4c7b5bf27df695",
+        "version": 0,
+        "state": "acVoltage",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 850,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e074fc67dacf9aec",
+        "type": "ha-binary-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Cooling Mode",
+        "entityConfig": "db4f88a096a9ed67",
+        "version": 0,
+        "state": "mode=\"cool\"",
+        "stateType": "jsonata",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 860,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5344a9bc9337f7ea",
+        "type": "ha-binary-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Heating Mode",
+        "entityConfig": "e59f559c5e6f7db0",
+        "version": 0,
+        "state": "mode=\"heat\"",
+        "stateType": "jsonata",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 860,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2f932a4e79e6775d",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Flow",
+        "entityConfig": "61bb3056c04b9fd3",
+        "version": 0,
+        "state": "waterFlow",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 850,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3d50182ee44708e8",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "AC Current",
+        "entityConfig": "8efddcaaf0fce470",
+        "version": 0,
+        "state": "current",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 850,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "50601fe4d5208dbb",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "DC Voltage",
+        "entityConfig": "0228a8b8ac341a8c",
+        "version": 0,
+        "state": "busVoltage",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 850,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c4a75e27fc05bbfe",
+        "type": "ha-binary-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Defrost Mode",
+        "entityConfig": "4456174993d560af",
+        "version": 0,
+        "state": "defrost",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 860,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ec540322ee31b1e6",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Condenser Fan Speed",
+        "entityConfig": "75bcd90e81d13b23",
+        "version": 0,
+        "state": "condenserFan1Speed",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 880,
+        "y": 740,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "913a77d25bc24be7",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "Efficiency",
+        "func": "var newMsg = {payload: msg.payload};\n\n// Power in watts\nnewMsg[\"compressorPower\"] = msg.current * msg.acVoltage;\nnewMsg[\"compressorPowerRounded\"] = Math.round(newMsg[\"compressorPower\"]);\n\n// Load in watts\nif (msg.mode == \"cool\" && msg.inletWaterTemp >= msg.outletWaterTemp)\n    newMsg[\"primaryLoad\"] = msg.waterFlowUnrounded * (msg.inletWaterTemp - msg.outletWaterTemp) * 500.4 / 3.412;\nelse if ((msg.mode == \"heat\" || msg.mode == \"defrost\") && msg.inletWaterTemp <= msg.outletWaterTemp)\n    newMsg[\"primaryLoad\"] = msg.waterFlowUnrounded * (msg.outletWaterTemp - msg.inletWaterTemp) * 500.4 / 3.412;\nelse\n    newMsg[\"primaryLoad\"] = 0;\n\n// Rounded primary load\nnewMsg[\"primaryLoadRounded\"] = Math.round(newMsg[\"primaryLoad\"]);\n\n// COP rounded at 1 decimal place\nif (newMsg[\"primaryLoad\"] > 0 && newMsg[\"compressorPower\"] > 0)\n    newMsg[\"cop\"] = Math.round(newMsg[\"primaryLoad\"] / newMsg[\"compressorPower\"] * 100) / 100;\nelse\n    newMsg[\"cop\"] = null;\n\nreturn newMsg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 180,
+        "y": 800,
+        "wires": [
+            [
+                "e979e43ff33e4afb",
+                "7dd5077fae7f5f22",
+                "fddbe95cbdf2c173",
+                "17837928b8217c6f",
+                "beed3b2d0320bfcd",
+                "9f78327bf62fb5cf"
+            ]
+        ]
+    },
+    {
+        "id": "e979e43ff33e4afb",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Compressor + Fan Power",
+        "entityConfig": "5de42296aa373a81",
+        "version": 0,
+        "state": "compressorPowerRounded",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 890,
+        "y": 800,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7dd5077fae7f5f22",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Load",
+        "entityConfig": "57d346c842479e98",
+        "version": 0,
+        "state": "primaryLoadRounded",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 850,
+        "y": 860,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fddbe95cbdf2c173",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Current COP",
+        "entityConfig": "6820bb31804bd077",
+        "version": 0,
+        "state": "cop",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 850,
+        "y": 920,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fd9ac45e131228ca",
+        "type": "modbus-getter",
+        "z": "0a2673b12bac06f7",
+        "name": "Read P 0 - 105",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "logIOActivities": false,
+        "unitid": "1",
+        "dataType": "HoldingRegister",
+        "adr": "0",
+        "quantity": "106",
+        "server": "efda4fa8d64a8ea0",
+        "useIOFile": false,
+        "ioFile": "",
+        "useIOForPayload": false,
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayTime": "",
+        "x": 160,
+        "y": 1620,
+        "wires": [
+            [
+                "4b812b5db7889ce2",
+                "dee7711effe9a177"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "d1ece748c9a983d5",
+        "type": "delay",
+        "z": "0a2673b12bac06f7",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 440,
+        "y": 100,
+        "wires": [
+            [
+                "ab56a4df0ad352fe"
+            ]
+        ]
+    },
+    {
+        "id": "4b812b5db7889ce2",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "CX-34 Parameters 0 - 105",
+        "func": "// Mapping of modbus registers, limited selection of P-Parameters\nvar cx34map = [\n  { index: 2, name: \"hysteresisF\", measurement: \"deltaTemperatureF\" },\n  { index: 2, name: \"hysteresisC\", measurement: \"deltaTemperature\" },\n  { index: 3, name: \"defrostStartC\", measurement: \"temperatureC\" },\n  { index: 3, name: \"defrostStartF\", measurement: \"temperatureF\" },\n  { index: 6, name: \"defrostStopC\", measurement: \"temperatureC\" },\n  { index: 6, name: \"defrostStopF\", measurement: \"temperatureF\" },\n  { index: 15, name: \"coolingSetpointF\", measurement: \"temperatureF\" },\n  { index: 15, name: \"coolingSetpointC\", measurement: \"temperatureC\" },\n  { index: 16, name: \"heatingSetpointF\", measurement: \"temperatureF\" },\n  { index: 16, name: \"heatingSetpointC\", measurement: \"temperatureC\" },\n  { index: 23, name: \"eevControlMode\", measurement: \"mode\", modes:[\"no\",\"checking\",\"manual\",\"auto\"] },\n  { index: 26, name: \"primaryPumpMode\", measurement: \"mode\", modes: [\"run continuously\", \"stop when setpoint met\", \"run 1 minute every 15 minutes\"] },\n  { index: 36, name: \"compressorMaxSpeed\", measurement: \"speed\" },\n  { index: 44, name: \"setpointTolerance\", measurement: \"deltaTemperature\" },\n  { index: 50, name: \"flowSwitchThreshold\", measurement: \"flow\" },\n  { index: 50, name: \"flowSwitchThresholdSI\", measurement: \"flowSI\" },\n  { index: 52, name: \"flowSwitchType\", measurement: \"mode\", modes:[\"on-off switch\",\"YF-G1 meter\",\"YF-DN50 meter\",\"SEN-HZG1WA waterflow sensor\",\"heat meter\",\"DN40\"] },\n  { index: 68, name: \"primaryPumpTargetDeltaTempF\", measurement: \"deltaTemperatureF\" },\n  { index: 68, name: \"primaryPumpTargetDeltaTempC\", measurement: \"deltaTemperatureC\" },\n  { index: 69, name: \"primaryPumpMinSpeed\", measurement: \"speed\", maxSpeed:8 },\n  { index: 77, name: \"elecMeterAddress\", measurement: \"address\" },\n  { index: 103, name: \"ambientTempAutoHeating\", measurement: \"temperatureC\" },\n  { index: 104, name: \"ambientTempAutoCooling\", measurement: \"temperatureC\" },\n]\n\nvar newMsg = {payload: msg.payload};\n\nfor (const register of cx34map) {\n  var val = msg.payload[register.index];\n\n  if (register.measurement==\"temperatureF\")\n    val = Math.round(val * 9 / 5 + 32);\n\n  if (register.measurement == \"deltaTemperatureF\")\n    val = Math.round(val * 9 / 5 * 10) / 10;\n\n  if (register.measurement == \"switch\")\n    val = val > 0;\n\n  if (register.measurement == \"flow\")\n    val = Math.round(val * 0.26417 * 10) / 10;\n\n  if (register.measurement == \"current\")\n    val = val;\n\n  if (register.measurement == \"mode\")\n    val = register.modes[val];\n\n  newMsg[register.name] = val;\n}\n\nlet cx34 = flow.get(\"cx34\");\ncx34.coolingSetpoint = newMsg.coolingSetpointC;\ncx34.heatingSetpoint = newMsg.heatingSetpointC;\ncx34.coolingSetpointF = newMsg.coolingSetpointF;\ncx34.heatingSetpointF = newMsg.heatingSetpointF;\ncx34.hysteresisF = newMsg.hysteresisF;\ncx34.flowSwitchType = newMsg.flowSwitchType;\nflow.set(\"cx34\", cx34);\n\nreturn newMsg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 1580,
+        "wires": [
+            [
+                "f7b2500daa4d3d5d",
+                "17bf6b8de277b06b",
+                "d6da7477dd22d017",
+                "09f69f1415bdcc88",
+                "73fb73941f8e5e63",
+                "948bf875c5f457a0",
+                "40b5919e6d4a6f04",
+                "d685ca504d0dbe43",
+                "815a7fa7aa1aca87",
+                "f24c9c087399ec4d",
+                "24c1621a0c6c4eb1",
+                "9e7654152e7141bb",
+                "92cb3dcb8059db2d",
+                "b0dc912684297634",
+                "f3409fb550e3d7f1",
+                "0e9911cd9bd8c148",
+                "915bc10d244653e4"
+            ]
+        ]
+    },
+    {
+        "id": "ab56a4df0ad352fe",
+        "type": "link out",
+        "z": "0a2673b12bac06f7",
+        "name": "T1",
+        "mode": "link",
+        "links": [
+            "a3886f451825dd84"
+        ],
+        "x": 535,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "a3886f451825dd84",
+        "type": "link in",
+        "z": "0a2673b12bac06f7",
+        "name": "T1",
+        "links": [
+            "ab56a4df0ad352fe"
+        ],
+        "x": 45,
+        "y": 1620,
+        "wires": [
+            [
+                "fd9ac45e131228ca"
+            ]
+        ]
+    },
+    {
+        "id": "dee7711effe9a177",
+        "type": "delay",
+        "z": "0a2673b12bac06f7",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 440,
+        "y": 1640,
+        "wires": [
+            [
+                "14abdffc4c608905"
+            ]
+        ]
+    },
+    {
+        "id": "864342e55baec563",
+        "type": "modbus-getter",
+        "z": "0a2673b12bac06f7",
+        "name": "Read P 140 - 144",
+        "showStatusActivities": false,
+        "showErrors": false,
+        "showWarnings": true,
+        "logIOActivities": false,
+        "unitid": "1",
+        "dataType": "HoldingRegister",
+        "adr": "140",
+        "quantity": "5",
+        "server": "efda4fa8d64a8ea0",
+        "useIOFile": false,
+        "ioFile": "",
+        "useIOForPayload": false,
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayTime": "",
+        "x": 170,
+        "y": 2280,
+        "wires": [
+            [
+                "71090ce5c9a03dfc"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "14abdffc4c608905",
+        "type": "link out",
+        "z": "0a2673b12bac06f7",
+        "name": "T2",
+        "mode": "link",
+        "links": [
+            "191f3123f4cb973f"
+        ],
+        "x": 535,
+        "y": 1640,
+        "wires": []
+    },
+    {
+        "id": "191f3123f4cb973f",
+        "type": "link in",
+        "z": "0a2673b12bac06f7",
+        "name": "T2",
+        "links": [
+            "14abdffc4c608905"
+        ],
+        "x": 45,
+        "y": 2280,
+        "wires": [
+            [
+                "864342e55baec563"
+            ]
+        ]
+    },
+    {
+        "id": "f7b2500daa4d3d5d",
+        "type": "debug",
+        "z": "0a2673b12bac06f7",
+        "d": true,
+        "name": "P 0 - 105",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 1580,
+        "wires": []
+    },
+    {
+        "id": "71090ce5c9a03dfc",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "CX-34 Parameters 140 - 144",
+        "func": "// Normalize array to use register number instead of starting at index 0\nconst indexBase = Number(msg.modbusRequest.address);\nlet newArray = Array(indexBase);\nmsg.payload = newArray.concat(msg.payload);\n\nconst cx34map = [\n  { index: 140, name: \"run\", measurement: \"mode\", modes: [\"off\", \"on\"] },\n  { index: 141, name: \"mode\", measurement: \"mode\", modes: [\"off\", \"cool\", \"heat\", \"dhw\"] },\n]\n\nlet newMsg = {payload: msg.payload};\n\nfor (const register of cx34map) {\n  let val = msg.payload[register.index];\n\n  if (register.measurement==\"temperature\")\n    val = val * 9 / 5 + 32;\n\n  if (register.measurement == \"deltaTemperature\")\n    val = Math.round(val * 9 / 5 * 10) / 10;\n\n  if (register.measurement == \"switch\")\n    val = val > 0;\n\n  if (register.measurement == \"flow\")\n    val = Math.round(val * 0.26417);\n\n  if (register.measurement == \"current\")\n    val = val;\n\n  if (register.measurement == \"mode\")\n    val = register.modes[val];\n\n  newMsg[register.name] = val;\n}\n\nlet cx34 = flow.get(\"cx34\");\ncx34.run = newMsg.run;\ncx34.mode = newMsg.mode;\nflow.set(\"cx34\", cx34);\n\nreturn newMsg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 2240,
+        "wires": [
+            [
+                "8a71ca982aab28a2",
+                "de8268766f9b4caa",
+                "dcbd0154dd1f0612"
+            ]
+        ]
+    },
+    {
+        "id": "8a71ca982aab28a2",
+        "type": "debug",
+        "z": "0a2673b12bac06f7",
+        "d": true,
+        "name": "P 140 - 144",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 850,
+        "y": 2240,
+        "wires": []
+    },
+    {
+        "id": "55872bc50750ca85",
+        "type": "link out",
+        "z": "0a2673b12bac06f7",
+        "name": "link out 1",
+        "mode": "link",
+        "links": [
+            "635ef4e638ae4ea2",
+            "fa073da5ebdadca5"
+        ],
+        "x": 795,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "635ef4e638ae4ea2",
+        "type": "link in",
+        "z": "0a2673b12bac06f7",
+        "name": "link in 1",
+        "links": [
+            "55872bc50750ca85"
+        ],
+        "x": 1365,
+        "y": 40,
+        "wires": [
+            [
+                "0cfbc6aab3a4b63d",
+                "1c179ac48010a8ed",
+                "43805b69cbac85d0",
+                "9a1643f46eba92c1",
+                "6febd1cc9ffe934a",
+                "3d9732a9b261a96c",
+                "853e30e5b7508784",
+                "1b8030af44c10f03",
+                "f2b2b62554ff1f5a",
+                "a5b250854f0628d6",
+                "4a3682c2e3b13ff1"
+            ]
+        ]
+    },
+    {
+        "id": "1c179ac48010a8ed",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Coil Temperature",
+        "entityConfig": "9def5a639fdac2b0",
+        "version": 0,
+        "state": "coilTemp",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1570,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "43805b69cbac85d0",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Exhaust Temperature",
+        "entityConfig": "5de6dd1d79804f28",
+        "version": 0,
+        "state": "exhaustTemp",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1580,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9a1643f46eba92c1",
+        "type": "ha-binary-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Heating Relay DIN6",
+        "entityConfig": "61692ff49e4e2809",
+        "version": 0,
+        "state": "heatingSwitch",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1580,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6febd1cc9ffe934a",
+        "type": "ha-binary-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Cooling Relay DIN5",
+        "entityConfig": "c4ec5b83397d600b",
+        "version": 0,
+        "state": "coolingSwitch",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1570,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "dc442e73aba5b1bf",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Compressor Speed",
+        "entityConfig": "7989391ee675fe11",
+        "version": 0,
+        "state": "compressorSpeed",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 870,
+        "y": 680,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3d9732a9b261a96c",
+        "type": "ha-binary-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Compressor Heater",
+        "entityConfig": "34c816409dd88731",
+        "version": 0,
+        "state": "compressorHeater",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1570,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "853e30e5b7508784",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Expansion Valve Opening",
+        "entityConfig": "1da2c455901840b7",
+        "version": 0,
+        "state": "expansionValveOpening",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1590,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "17bf6b8de277b06b",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Temperature Hysteresis",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "b90b104056d9ed0f",
+        "mode": "set",
+        "value": "hysteresisC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 880,
+        "y": 1620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ef8cd0538009fb04",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Temperature Hysteresis",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "b90b104056d9ed0f",
+        "mode": "listen",
+        "value": "hysteresisC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "num"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "2",
+                "valueType": "num"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "deltaTemperatureC",
+                "valueType": "str"
+            }
+        ],
+        "x": 1160,
+        "y": 1620,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "c265873b5a7cba5e",
+        "type": "debug",
+        "z": "0a2673b12bac06f7",
+        "name": "CX34 Writing",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1670,
+        "y": 1800,
+        "wires": []
+    },
+    {
+        "id": "04aafb3b9d600444",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "Listen for change",
+        "func": "if (msg.payload != msg.previousValue) {\n  let val = msg.payload;\n\n  if (msg.measurement == \"temperature\")\n    val = Math.round((val - 32) * 5 / 9);\n\n  if (msg.measurement == \"deltaTemperature\")\n    val = Math.round(val * 5 / 9);\n\n  if (msg.measurement == \"mode\")\n    val = msg.modes.indexOf(val);\n\n  msg.payload = {\n    value: val,\n    fc: msg.fc, \n    unitid: msg.unitid, \n    address: msg.address, \n    quantity: msg.quantity\n  }\n  return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1430,
+        "y": 1800,
+        "wires": [
+            [
+                "c265873b5a7cba5e",
+                "c5a33bde241e619b"
+            ]
+        ]
+    },
+    {
+        "id": "c5a33bde241e619b",
+        "type": "modbus-flex-write",
+        "z": "0a2673b12bac06f7",
+        "name": "CX-34 Write",
+        "showStatusActivities": true,
+        "showErrors": true,
+        "showWarnings": true,
+        "server": "efda4fa8d64a8ea0",
+        "emptyMsgOnFail": false,
+        "keepMsgProperties": false,
+        "delayOnStart": false,
+        "startDelayTime": "",
+        "x": 1670,
+        "y": 1840,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "d6da7477dd22d017",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Cooling Setpoint",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "f3ece6baef30333d",
+        "mode": "set",
+        "value": "coolingSetpointC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 860,
+        "y": 1680,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "09f69f1415bdcc88",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Heating Setpoint",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "3d3b350c1b089381",
+        "mode": "set",
+        "value": "heatingSetpointC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 860,
+        "y": 1740,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a616e42b9b8fc436",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Cooling Setpoint",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "f3ece6baef30333d",
+        "mode": "listen",
+        "value": "hysteresisC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "num"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "15",
+                "valueType": "num"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "temperatureC",
+                "valueType": "str"
+            }
+        ],
+        "x": 1180,
+        "y": 1680,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "df5b6f49a46e817d",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Heating Setpoint",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "3d3b350c1b089381",
+        "mode": "listen",
+        "value": "hysteresisC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "num"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "16",
+                "valueType": "num"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "temperatureC",
+                "valueType": "str"
+            }
+        ],
+        "x": 1180,
+        "y": 1740,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "de8268766f9b4caa",
+        "type": "ha-select",
+        "z": "0a2673b12bac06f7",
+        "name": "Mode",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "e13907caa8ab6254",
+        "mode": "set",
+        "value": "mode",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 830,
+        "y": 2340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "127c21335f2d96b1",
+        "type": "ha-select",
+        "z": "0a2673b12bac06f7",
+        "name": "Mode",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "e13907caa8ab6254",
+        "mode": "listen",
+        "value": "payload",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "str"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "str"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "141",
+                "valueType": "str"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "str"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "mode",
+                "valueType": "str"
+            },
+            {
+                "property": "modes",
+                "propertyType": "msg",
+                "value": "[\"off\", \"cool\", \"heat\", \"dhw\"]",
+                "valueType": "jsonata"
+            }
+        ],
+        "x": 1210,
+        "y": 2340,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "73fb73941f8e5e63",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Cooling Setpoint",
+        "entityConfig": "842ceaa33df4710e",
+        "version": 0,
+        "state": "coolingSetpointF",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 870,
+        "y": 1220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "948bf875c5f457a0",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Heating Setpoint",
+        "entityConfig": "91cae004cc207191",
+        "version": 0,
+        "state": "heatingSetpointF",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 870,
+        "y": 1280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "40b5919e6d4a6f04",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Coil Temp to Start Defrost",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "307be7f44029113a",
+        "mode": "set",
+        "value": "defrostStartC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 890,
+        "y": 1800,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d685ca504d0dbe43",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Coil Temperature to Start Defrost",
+        "entityConfig": "efbdaadbfef3ecaf",
+        "version": 0,
+        "state": "defrostStartF",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 920,
+        "y": 1340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "815a7fa7aa1aca87",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Coil Temp to Stop Defrost",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "2133142f147f9bc0",
+        "mode": "set",
+        "value": "defrostStopC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 890,
+        "y": 1860,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f24c9c087399ec4d",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Coil Temperature to Stop Defrost",
+        "entityConfig": "7590a14f9659224e",
+        "version": 0,
+        "state": "defrostStopF",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 920,
+        "y": 1400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "24c1621a0c6c4eb1",
+        "type": "ha-select",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Mode",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "ab2db69561babc35",
+        "mode": "set",
+        "value": "primaryPumpMode",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 870,
+        "y": 1920,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3e9bd254ef3985b3",
+        "type": "ha-select",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Mode",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "ab2db69561babc35",
+        "mode": "listen",
+        "value": "payload",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "str"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "str"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "26",
+                "valueType": "str"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "str"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "mode",
+                "valueType": "str"
+            },
+            {
+                "property": "modes",
+                "propertyType": "msg",
+                "value": "[\"run continuously\", \"stop when setpoint met\", \"run 1 minute every 15 minutes\"]",
+                "valueType": "jsonata"
+            }
+        ],
+        "x": 1170,
+        "y": 1920,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "7aa2cd637435b5cd",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Coil Temp to Start Defrost",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "307be7f44029113a",
+        "mode": "listen",
+        "value": "hysteresisC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "num"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "3",
+                "valueType": "num"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "temperatureC",
+                "valueType": "str"
+            }
+        ],
+        "x": 1150,
+        "y": 1800,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "13f0bedd43f964e5",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Coil Temp to Stop Defrost",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "2133142f147f9bc0",
+        "mode": "listen",
+        "value": "hysteresisC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "num"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "num"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "temperatureC",
+                "valueType": "str"
+            }
+        ],
+        "x": 1150,
+        "y": 1860,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "dcbd0154dd1f0612",
+        "type": "ha-select",
+        "z": "0a2673b12bac06f7",
+        "name": "Run",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "21fc28392131698f",
+        "mode": "set",
+        "value": "run",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 830,
+        "y": 2280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ddf5fc20a97db4ba",
+        "type": "ha-select",
+        "z": "0a2673b12bac06f7",
+        "name": "Run",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "21fc28392131698f",
+        "mode": "listen",
+        "value": "payload",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "str"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "str"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "140",
+                "valueType": "str"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "str"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "mode",
+                "valueType": "str"
+            },
+            {
+                "property": "modes",
+                "propertyType": "msg",
+                "value": "[\"off\", \"on\"]",
+                "valueType": "jsonata"
+            }
+        ],
+        "x": 1210,
+        "y": 2280,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "74f49338c4ce9185",
+        "type": "watt2kwh",
+        "z": "0a2673b12bac06f7",
+        "format": "wh",
+        "maximum": "2",
+        "maximumunit": "mins",
+        "name": "Energy In",
+        "x": 640,
+        "y": 1040,
+        "wires": [
+            [
+                "5756f2b4217716c4"
+            ]
+        ]
+    },
+    {
+        "id": "17837928b8217c6f",
+        "type": "change",
+        "z": "0a2673b12bac06f7",
+        "name": "Power In",
+        "rules": [
+            {
+                "t": "move",
+                "p": "compressorPower",
+                "pt": "msg",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 420,
+        "y": 1040,
+        "wires": [
+            [
+                "74f49338c4ce9185"
+            ]
+        ]
+    },
+    {
+        "id": "1c6db8914d7ddeb3",
+        "type": "watt2kwh",
+        "z": "0a2673b12bac06f7",
+        "format": "wh",
+        "maximum": "2",
+        "maximumunit": "mins",
+        "name": "Energy Out",
+        "x": 630,
+        "y": 1160,
+        "wires": [
+            [
+                "9e3b6ad7dbdbb44a"
+            ]
+        ]
+    },
+    {
+        "id": "beed3b2d0320bfcd",
+        "type": "change",
+        "z": "0a2673b12bac06f7",
+        "name": "Power Out",
+        "rules": [
+            {
+                "t": "move",
+                "p": "primaryLoad",
+                "pt": "msg",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 430,
+        "y": 1160,
+        "wires": [
+            [
+                "1c6db8914d7ddeb3"
+            ]
+        ]
+    },
+    {
+        "id": "d6aeb59f16e18012",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "CX34 Energy In",
+        "entityConfig": "2d7d6b3efa964ef1",
+        "version": 0,
+        "state": "payload",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1560,
+        "y": 1040,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5756f2b4217716c4",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "Accumulator",
+        "func": "// Initialize acc to 0 if it doesn't exist already\nlet acc = flow.get('accIn');\n\n// Reset acc if msg.reset, or accumulate\nif (msg.resetAcc) {\n    msg.payload= 0;\n    flow.set('accIn', 0);\n} else {\n    acc = acc + msg.payload;\n    msg.payload = Math.round(acc);\n    flow.set('accIn', acc);\n}\n\n// Return\nreturn msg",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "// Code added here will be run once\n// whenever the node is started.\n\nif (flow.get(\"accIn\") === undefined) {\n    flow.set(\"accIn\", 0);\n}",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 1040,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "07f99538bafb7ccf",
+        "type": "inject",
+        "z": "0a2673b12bac06f7",
+        "name": "Reset at Midnight",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "resetAcc",
+                "v": "true",
+                "vt": "bool"
+            }
+        ],
+        "repeat": "",
+        "crontab": "00 00 * * *",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 610,
+        "y": 1100,
+        "wires": [
+            [
+                "9e3b6ad7dbdbb44a",
+                "5756f2b4217716c4"
+            ]
+        ]
+    },
+    {
+        "id": "9e3b6ad7dbdbb44a",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "Accumulator",
+        "func": "// Initialize acc to 0 if it doesn't exist already\nlet acc = flow.get(\"accOut\", \"persist\");\n\n// Reset acc if msg.reset, or accumulate\nif (msg.resetAcc) {\n    msg.payload = 0;\n    flow.set(\"accOut\", 0, \"persist\");\n} else {\n    acc = acc + msg.payload;\n    msg.payload = Math.round(acc);\n    flow.set(\"accOut\", acc, \"persist\");\n}\n\n// Return\nreturn msg",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "// Code added here will be run once\n// whenever the node is started.\n\nif (flow.get(\"accOut\", \"persist\") === undefined) {\n    flow.set(\"accOut\", 0, \"persist\");\n}",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 1160,
+        "wires": [
+            [
+                "038487944ea512b5",
+                "4f7f84f3263427ac"
+            ]
+        ]
+    },
+    {
+        "id": "038487944ea512b5",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "CX34 Energy Out",
+        "entityConfig": "8443ddadaed52fad",
+        "version": 0,
+        "state": "payload",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1570,
+        "y": 1160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fa073da5ebdadca5",
+        "type": "link in",
+        "z": "0a2673b12bac06f7",
+        "name": "link in 2",
+        "links": [
+            "55872bc50750ca85"
+        ],
+        "x": 85,
+        "y": 800,
+        "wires": [
+            [
+                "913a77d25bc24be7"
+            ]
+        ]
+    },
+    {
+        "id": "636dc043238a4b53",
+        "type": "change",
+        "z": "0a2673b12bac06f7",
+        "name": "In",
+        "rules": [
+            {
+                "t": "move",
+                "p": "payload",
+                "pt": "msg",
+                "to": "energy",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "in",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "parts",
+                "pt": "msg",
+                "to": "{\"id\":_msgid, \"count\":2}",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1030,
+        "y": 1080,
+        "wires": [
+            [
+                "c1868bea12c3c480"
+            ]
+        ]
+    },
+    {
+        "id": "c1868bea12c3c480",
+        "type": "join",
+        "z": "0a2673b12bac06f7",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "energy",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": true,
+        "accumulate": false,
+        "timeout": "30",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1190,
+        "y": 1100,
+        "wires": [
+            [
+                "17ac92306f47e1a5"
+            ]
+        ]
+    },
+    {
+        "id": "17ac92306f47e1a5",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "COP",
+        "func": "if (\"energy\" in msg && \"out\" in msg.energy && \"in\" in msg.energy) {\n    msg.copToday = Math.round(10 * msg.energy.out / msg.energy.in) / 10;\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1350,
+        "y": 1100,
+        "wires": [
+            [
+                "f8c5adbdf7737ce7"
+            ]
+        ]
+    },
+    {
+        "id": "f8c5adbdf7737ce7",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "COP Today",
+        "entityConfig": "44d7e5449a5b1868",
+        "version": 0,
+        "state": "copToday",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1550,
+        "y": 1100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4f7f84f3263427ac",
+        "type": "change",
+        "z": "0a2673b12bac06f7",
+        "name": "Out",
+        "rules": [
+            {
+                "t": "move",
+                "p": "payload",
+                "pt": "msg",
+                "to": "energy",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "out",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "parts",
+                "pt": "msg",
+                "to": "{\"id\":_msgid, \"count\":2}",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1030,
+        "y": 1120,
+        "wires": [
+            [
+                "c1868bea12c3c480"
+            ]
+        ]
+    },
+    {
+        "id": "8463ce511e90e680",
+        "type": "ha-update-config",
+        "z": "0a2673b12bac06f7",
+        "name": "Icon: Heating Relay DIN6",
+        "server": "263937bf.b50798",
+        "entityConfig": "61692ff49e4e2809",
+        "version": 0,
+        "outputProperties": [],
+        "x": 1590,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1b8030af44c10f03",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "DIN Relays Icon",
+        "func": "let iconTrue = \"mdi:electric-switch-closed\";\nlet iconFalse = \"mdi:electric-switch\";\n\n// Heating relay config\nlet htgP = {}\nif (msg.heatingSwitch) {htgP = {\"icon\": iconTrue}}\nelse {htgP = {\"icon\": iconFalse}};\nconst htgMsg = {payload: htgP};\n\n// Cooling relay config\nlet clgP = {}\nif (msg.coolingSwitch) { clgP = { \"icon\": iconTrue } }\nelse { clgP = { \"icon\": iconFalse } };\nconst clgMsg = { payload: clgP };\n\nreturn [htgMsg, clgMsg];",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1320,
+        "y": 620,
+        "wires": [
+            [
+                "8463ce511e90e680"
+            ],
+            [
+                "fa3a4a720a5383f0"
+            ]
+        ]
+    },
+    {
+        "id": "fa3a4a720a5383f0",
+        "type": "ha-update-config",
+        "z": "0a2673b12bac06f7",
+        "name": "Icon: Cooling Relay DIN5",
+        "server": "263937bf.b50798",
+        "entityConfig": "c4ec5b83397d600b",
+        "version": 0,
+        "outputProperties": [],
+        "x": 1590,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9e7654152e7141bb",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Min Speed",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "9deda8c458176aef",
+        "mode": "set",
+        "value": "primaryPumpMinSpeed",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 890,
+        "y": 1980,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "22b64dfbcef3bf0d",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Min Speed",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "9deda8c458176aef",
+        "mode": "listen",
+        "value": "hysteresisC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "num"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "69",
+                "valueType": "num"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "speed",
+                "valueType": "str"
+            }
+        ],
+        "x": 1150,
+        "y": 1980,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "92cb3dcb8059db2d",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Target ΔT",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "fc092ded2c80f60a",
+        "mode": "set",
+        "value": "primaryPumpTargetDeltaTempC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 890,
+        "y": 2040,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "63f1c68f1d9a4666",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Target ΔT",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "fc092ded2c80f60a",
+        "mode": "listen",
+        "value": "hysteresisC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "num"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "68",
+                "valueType": "num"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "deltaTemperatureC",
+                "valueType": "str"
+            }
+        ],
+        "x": 1150,
+        "y": 2040,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "b0dc912684297634",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Target ΔT",
+        "entityConfig": "05fc6fc5c258d06d",
+        "version": 0,
+        "state": "primaryPumpTargetDeltaTempF",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 890,
+        "y": 1460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f3409fb550e3d7f1",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Compressor Max Speed",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "ca7f6c335675f12f",
+        "mode": "set",
+        "value": "compressorMaxSpeed",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 890,
+        "y": 2100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "553d89d4e5135517",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Compressor Max Speed",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "ca7f6c335675f12f",
+        "mode": "listen",
+        "value": "hysteresisC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "num"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "36",
+                "valueType": "num"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "speed",
+                "valueType": "str"
+            }
+        ],
+        "x": 1150,
+        "y": 2100,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "f2b2b62554ff1f5a",
+        "type": "ha-binary-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Run",
+        "entityConfig": "61116f86ae513e2c",
+        "version": 0,
+        "state": "primaryPump",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1570,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a5b250854f0628d6",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "Pump Icon",
+        "func": "let iconTrue = \"mdi:pump\";\nlet iconFalse = \"mdi:pump-off\";\n\nlet pumpP = {}\nif (msg.primaryPump) { pumpP = {\"icon\": iconTrue}}\nelse { pumpP = {\"icon\": iconFalse}};\nconst pumpMsg = { payload: pumpP};\n\nreturn pumpMsg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1310,
+        "y": 660,
+        "wires": [
+            [
+                "67aa10cb138d583a"
+            ]
+        ]
+    },
+    {
+        "id": "67aa10cb138d583a",
+        "type": "ha-update-config",
+        "z": "0a2673b12bac06f7",
+        "name": "Icon: Primary Pump Run",
+        "server": "263937bf.b50798",
+        "entityConfig": "61116f86ae513e2c",
+        "version": 0,
+        "outputProperties": [],
+        "x": 1590,
+        "y": 680,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4a3682c2e3b13ff1",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Speed",
+        "entityConfig": "694235150c85b2a5",
+        "version": 0,
+        "state": "primaryPumpSpeed",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 1580,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0e9911cd9bd8c148",
+        "type": "ha-sensor",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Flow Minimum",
+        "entityConfig": "c3fa6815e52b030f",
+        "version": 0,
+        "state": "flowSwitchThreshold",
+        "stateType": "msg",
+        "attributes": [],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 880,
+        "y": 1520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "915bc10d244653e4",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Flow Minimum",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "cdd27a34901576ea",
+        "mode": "set",
+        "value": "flowSwitchThresholdSI",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 880,
+        "y": 2160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f805bb57068d9c38",
+        "type": "ha-number",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Flow Minimum",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 0,
+        "outputs": 1,
+        "entityConfig": "cdd27a34901576ea",
+        "mode": "listen",
+        "value": "hysteresisC",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            },
+            {
+                "property": "fc",
+                "propertyType": "msg",
+                "value": "6",
+                "valueType": "num"
+            },
+            {
+                "property": "unitid",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "address",
+                "propertyType": "msg",
+                "value": "50",
+                "valueType": "num"
+            },
+            {
+                "property": "quantity",
+                "propertyType": "msg",
+                "value": "1",
+                "valueType": "num"
+            },
+            {
+                "property": "measurement",
+                "propertyType": "msg",
+                "value": "flowSI",
+                "valueType": "str"
+            }
+        ],
+        "x": 1160,
+        "y": 2160,
+        "wires": [
+            [
+                "04aafb3b9d600444"
+            ]
+        ]
+    },
+    {
+        "id": "9f6968d52ba9b01f",
+        "type": "comment",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Controls",
+        "info": "Most of the time\n\"stop when setpoint met\"\n\nWhen heat pump run is ON but compressor has been OFF for 5 minutes\n\"run 1 minute every 15 minutes\"",
+        "x": 140,
+        "y": 2460,
+        "wires": []
+    },
+    {
+        "id": "b09950c547cf2624",
+        "type": "inject",
+        "z": "0a2673b12bac06f7",
+        "name": "Cycle every 10s",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "10",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "5",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 170,
+        "y": 2500,
+        "wires": [
+            [
+                "50d3d1d9460bd605"
+            ]
+        ]
+    },
+    {
+        "id": "04b35e4e9db7f564",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "Set Primary Pump Mode",
+        "func": "let cx34 = flow.get(\"cx34\");\nlet compressorSpeed = cx34.compressorSpeed;\n\nlet lastTrigger = context.get(\"lastTrigger\");\n\n// Threshold on compressor speed\nlet threshold = 10;\n// Delay after compressor OFF and before activating circulation\nlet delay = 5 * 60 * 1000; // Delay 5 minutes, in ms\n\n// Set  buffer tank setpoint according to house-wide mode\nconst fcuMode = global.get(\"fcuMode\", \"persist\");\nconst buffer_temp = msg.buffer_temperature;\n// And current heat pump temperature settings\nconst coolingSetpoint = cx34.coolingSetpointF;\nconst heatingSetpoint = cx34.heatingSetpointF;\nconst hysteresis = cx34.hysteresisF;\nconst heatingStart = heatingSetpoint - hysteresis;\nconst coolingStart = coolingSetpoint + hysteresis;\n\n// Determine if circulation is needed\nlet circulation_needed = false;\nif (fcuMode == \"Heating\" && buffer_temp < heatingStart) {\n    circulation_needed = true;\n} else if (fcuMode == \"Cooling\" && buffer_temp > coolingStart) {\n    circulation_needed = true;\n}\n\n// Default pump mode\nlet pump_mode = \"stop when setpoint met\";\n\n// Choose mode\nif (compressorSpeed >= threshold) {\n    lastTrigger = Date.now();\n    pump_mode = \"stop when setpoint met\";\n} else if ((Date.now() - lastTrigger) > delay && circulation_needed) {\n    pump_mode = \"run continuously\";\n}\n\n// Store new values\ncontext.set(\"lastTrigger\", lastTrigger);\n\n// Return pump_mode value\nreturn {primaryPumpMode: pump_mode};",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "// Code added here will be run once\n// whenever the node is started.\n\n// Initialize lastTrigger at now(), used to keep track of last\n// time compressor speed exceeded threshold\nif (context.get(\"lastTrigger\") === undefined) {\n    context.set(\"lastTrigger\", Date.now())\n}",
+        "finalize": "",
+        "libs": [],
+        "x": 630,
+        "y": 2500,
+        "wires": [
+            [
+                "67191e60c128c314"
+            ]
+        ]
+    },
+    {
+        "id": "67191e60c128c314",
+        "type": "ha-select",
+        "z": "0a2673b12bac06f7",
+        "name": "Primary Pump Mode",
+        "version": 1,
+        "debugenabled": false,
+        "inputs": 1,
+        "outputs": 1,
+        "entityConfig": "ab2db69561babc35",
+        "exposeAsEntityConfig": "",
+        "mode": "set",
+        "value": "primaryPumpMode",
+        "valueType": "msg",
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "value"
+            },
+            {
+                "property": "previousValue",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "previousValue"
+            }
+        ],
+        "x": 870,
+        "y": 2500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9f78327bf62fb5cf",
+        "type": "api-current-state",
+        "z": "0a2673b12bac06f7",
+        "name": "Energy In Today - Chiltrix Heat Pump",
+        "server": "263937bf.b50798",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.electricity_space_heating_cooling_heat_pump_chiltrix",
+        "state_type": "str",
+        "blockInputOverrides": false,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entity"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 550,
+        "y": 980,
+        "wires": [
+            [
+                "40bfc92aa103d343"
+            ]
+        ]
+    },
+    {
+        "id": "40bfc92aa103d343",
+        "type": "function",
+        "z": "0a2673b12bac06f7",
+        "name": "kWh => Wh",
+        "func": "msg.payload = msg.payload * 1000;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 980,
+        "wires": [
+            [
+                "636dc043238a4b53",
+                "d6aeb59f16e18012"
+            ]
+        ]
+    },
+    {
+        "id": "50d3d1d9460bd605",
+        "type": "api-current-state",
+        "z": "0a2673b12bac06f7",
+        "name": "Buffer Tank Temperature",
+        "server": "263937bf.b50798",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "num",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.hhw_buffer_tank_temperature_top",
+        "state_type": "num",
+        "blockInputOverrides": false,
+        "outputProperties": [
+            {
+                "property": "buffer_temperature",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 390,
+        "y": 2500,
+        "wires": [
+            [
+                "04b35e4e9db7f564"
+            ]
+        ]
+    },
+    {
+        "id": "efda4fa8d64a8ea0",
+        "type": "modbus-client",
+        "name": "Modbus Central Utility Plant - Basement",
+        "clienttype": "serial",
+        "bufferCommands": true,
+        "stateLogEnabled": false,
+        "queueLogEnabled": true,
+        "failureLogEnabled": true,
+        "tcpHost": "127.0.0.1",
+        "tcpPort": "502",
+        "tcpType": "DEFAULT",
+        "serialPort": "/dev/ttyCUP",
+        "serialType": "RTU-BUFFERD",
+        "serialBaudrate": "9600",
+        "serialDatabits": "8",
+        "serialStopbits": "1",
+        "serialParity": "none",
+        "serialConnectionDelay": "100",
+        "serialAsciiResponseStartDelimiter": "0x3A",
+        "unit_id": "1",
+        "commandDelay": "100",
+        "clientTimeout": "550",
+        "reconnectOnTimeout": true,
+        "reconnectTimeout": "1000",
+        "parallelUnitIdsAllowed": false,
+        "showWarnings": true,
+        "showLogs": true
+    },
+    {
+        "id": "c3c564d0fd9ec377",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Outside air temperature",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Outside air temperature"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:thermometer"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°F"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "7bd1d903d9412362",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Inlet water temperature",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Inlet water temperature"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:thermometer-water"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°F"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "cc868eae6469d395",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Outlet water temperature",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Outlet water temperature"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:thermometer-water"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°F"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "6b4c7b5bf27df695",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "AC voltage",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "AC voltage"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:lightning-bolt"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "voltage"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "V"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "db4f88a096a9ed67",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Cooling mode",
+        "version": "6",
+        "entityType": "binary_sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Run - cooling"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:snowflake"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "running"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "e59f559c5e6f7db0",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Heating mode",
+        "version": "6",
+        "entityType": "binary_sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Run - heating"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:weather-sunny"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "running"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "61bb3056c04b9fd3",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Primary flow",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Primary flow"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:hydro-power"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "gpm"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "8efddcaaf0fce470",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "AC current - Compressor + Fan",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "AC current"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:current-ac"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "current"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "A"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "0228a8b8ac341a8c",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "DC voltage",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "DC voltage"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:lightning-bolt"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "voltage"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "V"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "4456174993d560af",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Defrost mode",
+        "version": "6",
+        "entityType": "binary_sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Run - defrost"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:snowflake-melt"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "running"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "75bcd90e81d13b23",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Condenser fan speed",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Condenser fan speed"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:fan-chevron-up"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "%"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "5de42296aa373a81",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Compressor + fan power",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Compressor + fan power"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:engine"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "power"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "W"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "57d346c842479e98",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Primary load",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Primary load"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:gauge"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "power"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "W"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "6820bb31804bd077",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Current COP",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Current COP"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:heat-pump-outline"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "9def5a639fdac2b0",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Coil temperature",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Coil temperature"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:heating-coil"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°F"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "5de6dd1d79804f28",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Exhaust temperature",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Exhaust temperature"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:wind-power"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°F"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "61692ff49e4e2809",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Heating relay DIN6",
+        "version": "6",
+        "entityType": "binary_sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Switch DIN6: heating"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:electric-switch"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "plug"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "c4ec5b83397d600b",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Cooling relay DIN5",
+        "version": "6",
+        "entityType": "binary_sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Switch DIN5: cooling"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:electric-switch"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "plug"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "7989391ee675fe11",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Compressor speed",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Compressor speed"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:speedometer"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "%"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "34c816409dd88731",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Compressor heater",
+        "version": "6",
+        "entityType": "binary_sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Compressor heater"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:radiator"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "running"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "1da2c455901840b7",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Expansion valve position",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Expansion valve position"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:valve"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "b90b104056d9ed0f",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Temperature hysteresis parameter",
+        "version": "6",
+        "entityType": "number",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Hysteresis of water temperature controls (°C)"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:chart-sankey"
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°C"
+            },
+            {
+                "property": "min_value",
+                "value": 2
+            },
+            {
+                "property": "max_value",
+                "value": 15
+            },
+            {
+                "property": "step_value",
+                "value": 1
+            },
+            {
+                "property": "mode",
+                "value": "auto"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "f3ece6baef30333d",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Cooling setpoint parameter",
+        "version": "6",
+        "entityType": "number",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Cooling return water temperature setpoint (°C) - Default 12°C"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:snowflake-thermometer"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°C"
+            },
+            {
+                "property": "min_value",
+                "value": 12
+            },
+            {
+                "property": "max_value",
+                "value": 20
+            },
+            {
+                "property": "step_value",
+                "value": 1
+            },
+            {
+                "property": "mode",
+                "value": "auto"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "3d3b350c1b089381",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Heating setpoint parameter",
+        "version": "6",
+        "entityType": "number",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Heating return water temperature setpoint (°C) - Standard 35°C"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:sun-thermometer"
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°C"
+            },
+            {
+                "property": "min_value",
+                "value": 25
+            },
+            {
+                "property": "max_value",
+                "value": 50
+            },
+            {
+                "property": "step_value",
+                "value": 1
+            },
+            {
+                "property": "mode",
+                "value": "auto"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "e13907caa8ab6254",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Mode",
+        "version": "6",
+        "entityType": "select",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Mode"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:sun-snowflake-variant"
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "options",
+                "value": [
+                    "cool",
+                    "heat"
+                ]
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "842ceaa33df4710e",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Cooling Setpoint",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Cooling return water temperature setpoint"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:snowflake-thermometer"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°F"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "91cae004cc207191",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Heating setpoint",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Heating return water temperature setpoint"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:sun-thermometer"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°F"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "307be7f44029113a",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Coil temperature to start defrost parameter",
+        "version": "6",
+        "entityType": "number",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Coil temperature to start defrost (°C)"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:snowflake-melt"
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°C"
+            },
+            {
+                "property": "min_value",
+                "value": -20
+            },
+            {
+                "property": "max_value",
+                "value": 5
+            },
+            {
+                "property": "step_value",
+                "value": 1
+            },
+            {
+                "property": "mode",
+                "value": "auto"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "efbdaadbfef3ecaf",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Coil temperature to start defrost",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Coil temperature to start defrost"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:snowflake-melt"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°F"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "2133142f147f9bc0",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Coil temperature to stop defrost parameter",
+        "version": "6",
+        "entityType": "number",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Coil temperature to stop defrost (°C)"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:snowflake-melt"
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°C"
+            },
+            {
+                "property": "min_value",
+                "value": 10
+            },
+            {
+                "property": "max_value",
+                "value": 35
+            },
+            {
+                "property": "step_value",
+                "value": 1
+            },
+            {
+                "property": "mode",
+                "value": "auto"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "7590a14f9659224e",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Coil temperature to stop defrost",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Coil temperature to stop defrost"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:snowflake-melt"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°F"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "ab2db69561babc35",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Primary pump mode",
+        "version": "6",
+        "entityType": "select",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Primary pump mode"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:pump"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "options",
+                "value": [
+                    "run continuously",
+                    "stop when setpoint met",
+                    "run 1 minute every 15 minutes"
+                ]
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "21fc28392131698f",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Run",
+        "version": "6",
+        "entityType": "select",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Run"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:light-switch-off"
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "options",
+                "value": [
+                    "off",
+                    "on"
+                ]
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "2d7d6b3efa964ef1",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "CX34 energy in",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "CX34 energy in"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:lightning-bolt"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "energy"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "Wh"
+            },
+            {
+                "property": "state_class",
+                "value": "total_increasing"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "8443ddadaed52fad",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "CX34 energy out",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "CX34 energy out"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:sun-snowflake-variant"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "energy"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "Wh"
+            },
+            {
+                "property": "state_class",
+                "value": "total_increasing"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "44d7e5449a5b1868",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "COP today",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Overall COP today"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:division-box"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "263937bf.b50798",
+        "type": "server",
+        "name": "Home Assistant",
+        "addon": true
+    },
+    {
+        "id": "9deda8c458176aef",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Primary pump min speed",
+        "version": "6",
+        "entityType": "number",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Primary pump min speed"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:speedometer-slow"
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "min_value",
+                "value": 2
+            },
+            {
+                "property": "max_value",
+                "value": 8
+            },
+            {
+                "property": "step_value",
+                "value": 1
+            },
+            {
+                "property": "mode",
+                "value": "auto"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "fc092ded2c80f60a",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Primary pump target ΔT parameter",
+        "version": "6",
+        "entityType": "number",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Primary pump target ΔT (°C)"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:chart-line-stacked"
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°C"
+            },
+            {
+                "property": "min_value",
+                "value": 1
+            },
+            {
+                "property": "max_value",
+                "value": 10
+            },
+            {
+                "property": "step_value",
+                "value": 1
+            },
+            {
+                "property": "mode",
+                "value": "auto"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "05fc6fc5c258d06d",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Primary pump target ΔT parameter",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Primary pump target ΔT"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:chart-line-stacked"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "temperature"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "°F"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "ca7f6c335675f12f",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Compressor max speed",
+        "version": "6",
+        "entityType": "number",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Compressor max speed"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:speedometer"
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "frequency"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "Hz"
+            },
+            {
+                "property": "min_value",
+                "value": 50
+            },
+            {
+                "property": "max_value",
+                "value": 120
+            },
+            {
+                "property": "step_value",
+                "value": 1
+            },
+            {
+                "property": "mode",
+                "value": "auto"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "61116f86ae513e2c",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Primary pump run",
+        "version": "6",
+        "entityType": "binary_sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Primary pump run"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:pump"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": "running"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "694235150c85b2a5",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Primary pump speed",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Primary pump speed"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:speedometer-medium"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "%"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "c3fa6815e52b030f",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "35d02da13e69c84b",
+        "name": "Primary flow minimum",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Primary flow minimum"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:wave"
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "gpm"
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "cdd27a34901576ea",
+        "type": "ha-entity-config",
+        "server": "263937bf.b50798",
+        "deviceConfig": "132970200333e9f2",
+        "name": "Primary flow minimum parameter",
+        "version": "6",
+        "entityType": "number",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Primary flow minimum (L/min)"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:wave"
+            },
+            {
+                "property": "entity_category",
+                "value": "config"
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": "L/min"
+            },
+            {
+                "property": "min_value",
+                "value": 6
+            },
+            {
+                "property": "max_value",
+                "value": 60
+            },
+            {
+                "property": "step_value",
+                "value": 1
+            },
+            {
+                "property": "mode",
+                "value": "auto"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "35d02da13e69c84b",
+        "type": "ha-device-config",
+        "name": "Heat Pump Status",
+        "hwVersion": "",
+        "manufacturer": "Node-RED",
+        "model": "",
+        "swVersion": ""
+    },
+    {
+        "id": "132970200333e9f2",
+        "type": "ha-device-config",
+        "name": "Heat Pump Configuration",
+        "hwVersion": "",
+        "manufacturer": "Node-RED",
+        "model": "",
+        "swVersion": ""
+    }
+]
