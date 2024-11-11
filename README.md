@@ -8,6 +8,6 @@ Modbus RTU controls implementation for Chiltrix CX34-4 heat pump in JavaScript, 
 - Calculation of coefficient of performance (COP), both instantaneous and daily values
 
 ## Dependencies
-[node-red-contrib-home-assistant-websocket](https://flows.nodered.org/node/node-red-contrib-home-assistant-websocket)
-[node-red-contrib-modbus](https://flows.nodered.org/node/node-red-contrib-modbus)
-[node-red-contrib-watt2kwh](https://flows.nodered.org/node/node-red-contrib-watt2kwh)
+- [node-red-contrib-home-assistant-websocket](https://flows.nodered.org/node/node-red-contrib-home-assistant-websocket)
+- [node-red-contrib-modbus](https://flows.nodered.org/node/node-red-contrib-modbus)
+- [node-red-contrib-watt2kwh](https://flows.nodered.org/node/node-red-contrib-watt2kwh)
